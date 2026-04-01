@@ -6,6 +6,8 @@
  *
  * Features:
  *  - Optional buffer size via -b BUFSZ
+ *  - [-v] Verbose report printing statistics to stderr
+ *  -[-p] Preserve permissions from source to destination
  *  - Robust read loop (handles EINTR)
  *  - full_write() to handle partial writes + EINTR
  *  - Single cleanup path (goto cleanup)
@@ -17,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #define DEFAULT_BUFSZ (64 * 1024)
 
@@ -66,9 +69,10 @@ int main(int argc, char **argv)
 {
   size_t bufsz = DEFAULT_BUFSZ;
   int opt;
-  int verbose = 0;
+  int verbose = 0;  /* 0: false, 1: true */
+  int preserve = 0; /* 0: false, 1: true */
 
-  while ((opt = getopt(argc, argv, "b:v")) != -1)
+  while ((opt = getopt(argc, argv, "b:vp")) != -1)
   {
     if (opt == 'b')
     {
@@ -79,7 +83,11 @@ int main(int argc, char **argv)
     }
     else if (opt == 'v')
     {
-      verbose = 1;
+      verbose = 1; /* Recognizes the -v flag */
+    }
+    else if (opt == 'p')
+    {
+      preserve = 1; /* Recognizes the -p flag */
     }
     else
     {
@@ -98,6 +106,7 @@ int main(int argc, char **argv)
   unsigned char *buf = NULL;
   int rc = 1;
 
+  /* Variables for (A) */
   size_t total_bytes = 0;
   struct timespec start_time, end_time;
 
@@ -126,11 +135,13 @@ int main(int argc, char **argv)
     goto cleanup;
   }
 
+  /* Starts the countdown. */
   if (verbose)
   {
     clock_gettime(CLOCK_MONOTONIC, &start_time);
   }
 
+  /* Basic I/O Loop */
   for (;;)
   {
     ssize_t r = read(src, buf, bufsz);
@@ -153,6 +164,27 @@ int main(int argc, char **argv)
     total_bytes += (size_t)r;
   }
 
+  /* (B) */
+  if (preserve)
+  {
+    struct stat st;
+
+    /* Reads the metadata of the source file */
+    if (fstat(src, &st) < 0)
+    {
+      perror("fstat");
+      goto cleanup;
+    }
+
+    /* Applies permissions to the destination file */
+    if (fchmod(dst, st.st_mode & 0777) < 0)
+    {
+      perror("fchmod");
+      goto cleanup;
+    }
+  }
+
+  /* Calculating and displaying statistics */
   if (verbose)
   {
     clock_gettime(CLOCK_MONOTONIC, &end_time);
