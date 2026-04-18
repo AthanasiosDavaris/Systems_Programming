@@ -1,0 +1,39 @@
+=== SYSTEM PROGRAMMING CONTEXT: LAB 2 (LOW-LEVEL I/O & MMAP) ===
+
+OBJECTIVE:
+Implementing robust file utilities (like cp, head, tail) and understanding memory-mapped I/O.
+
+1. ROBUST I/O & PARTIAL WRITES:
+- The 'write()' syscall does NOT guarantee writing all requested bytes at once (Partial Write).
+- MANDATORY PATTERN: Use a 'full_write' function with a 'while' loop that tracks remaining bytes and advances the buffer pointer.
+- Handling 'EINTR': If a syscall is interrupted by a signal (errno == EINTR), the program must 'continue' and retry the operation.
+
+2. FILE OPENING FLAGS:
+- SRC: O_RDONLY.
+- DST: O_WRONLY | O_CREAT | O_TRUNC (0644 permissions).
+- O_CREAT: Creates the file if it doesn't exist.
+- O_TRUNC: Wipes the file if it already exists.
+
+3. CLI PARSING (getopt):
+- Use 'getopt()' to handle optional flags (e.g., -b for buffer size).
+- 'optind' is the index of the first non-option argument (SRC/DST).
+- Exit Code 2: Reserved for "Usage Errors" (wrong arguments).
+
+4. PERFORMANCE & BUFFERS:
+- Buffer size (BUFSZ) significantly impacts performance.
+- Small buffers = More System Calls = High overhead.
+- Large buffers = Fewer System Calls = Better performance.
+- Use 'strace -c' to count syscalls and verify the impact of different buffer sizes.
+
+5. MEMORY MAPPING (mmap):
+- 'mmap()' maps a file directly into the process's address space.
+- Benefits: No 'read()' loop needed, faster for large files, access file data like a C array (char *ptr).
+- Key flags: PROT_READ, MAP_PRIVATE/MAP_SHARED.
+- Always 'munmap()' before closing the file.
+
+6. REFINED ERROR HANDLING:
+- Exit Code 0: Success.
+- Exit Code 1: Runtime Error (die_perror).
+- Exit Code 2: Usage/CLI Error (usage_msg).
+
+=== END OF LAB 2 CONTEXT ===

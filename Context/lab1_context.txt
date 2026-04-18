@@ -1,0 +1,34 @@
+=== SYSTEM PROGRAMMING CONTEXT: LAB 1 (INTRODUCTION) ===
+
+OBJECTIVE:
+Understanding the interface between User Space and Kernel Space in Linux using C.
+
+1. FILE DESCRIPTORS (FD):
+- Everything is a file.
+- Standard FDs: 0 (stdin), 1 (stdout), 2 (stderr).
+- System calls (open, read, write, close) return or use these integer FDs.
+
+2. ERROR HANDLING (THE GOLDEN RULES):
+- Always check return codes: Syscalls return -1 on failure, LibC calls return NULL.
+- 'errno': A global variable where the kernel writes the error code.
+- Rule: Save errno immediately (int saved = errno) because subsequent calls (even printf) can overwrite it.
+- 'perror("msg")': Prints "msg: <human_readable_error>" to stderr.
+- 'strerror(errno)': Returns the error string for custom formatting.
+
+3. RESOURCE MANAGEMENT (CLEANUP PATTERN):
+- C has no automatic garbage collection.
+- Use the 'goto cleanup;' pattern to ensure all resources (FDs, malloc'd memory) are released before a function returns.
+- This prevents memory leaks and FD leaks.
+
+4. DEBUGGING & INSPECTION TOOLS:
+- 'strace': Monitors System Calls (interaction with the Kernel). Use '-f' for child processes.
+- 'ltrace': Monitors Library Calls (interaction with libc).
+- 'gdb': For post-mortem analysis (backtrace 'bt') after a crash (Segfault).
+- '/proc/<pid>/': A pseudo-filesystem to inspect a process's state (status, fd, maps).
+
+5. PROJECT STRUCTURE & BUILD:
+- 'make': Automates compilation using a Makefile.
+- Folders: src/ (code), include/ (headers), bin/ (executables), build/ (objects).
+- Debug Flags: -g (debug symbols), -O0 (no optimization).
+
+=== END OF LAB 1 CONTEXT ===

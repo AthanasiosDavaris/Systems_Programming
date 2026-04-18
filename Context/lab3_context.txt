@@ -1,0 +1,31 @@
+=== SYSTEM PROGRAMMING CONTEXT: LAB 3 (MICRO-SHELL) ===
+
+OBJECTIVE:
+Building a mini-shell supporting simple commands, redirections (<, >), and a single pipeline (|).
+
+1. PROCESS LIFECYCLE:
+- Main loop: getline() -> tokenize (strtok_r) -> fork() -> execvp() -> waitpid().
+- Built-ins: Handle 'exit' in the parent process before forking.
+- Exec Failure: If execvp() returns, it failed. The child must call _exit(127) to prevent duplicate shell loops.
+
+2. REDIRECTION LOGIC (dup2):
+- Pattern: fd = open() -> dup2(fd, STDIN_FILENO or STDOUT_FILENO) -> close(fd).
+- This must happen in the CHILD process after fork() but before execvp().
+- Redirections are inherited by the exec'd program.
+
+3. PIPELINE LOGIC (cmd1 | cmd2):
+- Use pipe(pfd) to get two FDs: pfd[0] (read), pfd[1] (write).
+- Fork twice (one for each command).
+- Child 1 (Left): dup2(pfd[1], 1) and CLOSE both pfd[0], pfd[1].
+- Child 2 (Right): dup2(pfd[0], 0) and CLOSE both pfd[0], pfd[1].
+- Parent: MUST close both pfd[0] and pfd[1] immediately after forking both children, then waitpid() for both.
+
+4. FD HYGIENE:
+- "Unused pipe ends must be closed." Failure to close the write-end in all processes prevents the reader from receiving EOF, causing a hang.
+- Use 'strace -f -e trace=desc,process' to debug FD leaks and incorrect wiring.
+
+5. PARSING CONSTRAINTS:
+- Simplified shell: Requires spaces around operators (e.g., "ls | wc" not "ls|wc").
+- No quotes or escaping required for this implementation.
+
+=== END OF LAB 3 CONTEXT ===

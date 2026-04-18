@@ -1,7 +1,10 @@
 # Lab 2 — Low-level I/O utilities + mmap 
 
+- Ονοματεπώνυμο: Αθανάσιος Ντάβαρης
+- Α.Μ.: 2022202200150
+
 Περιεχόμενα:
-- `cp-lite`: αντιγραφή αρχείων με `open/read/write` (robust loops, partial writes)
+- `cp-lite`: αντιγραφή αρχείων με `open/read/write` (robust loops, partial writes) **+ (-v, -p)**
 - `wc-lite`: μετρητής `bytes/lines` με **μόνο** `open/read/close`
 - `mmap-view`: `mmap()` αρχείο και scan χωρίς `read()` loop
 
@@ -39,6 +42,20 @@ cmp -s big.bin out.bin && echo OK
 cmp -s big.bin out4k.bin && echo OK
 ```
 
+### cp-lite++ 
+
+Δοκιμή του -p
+```bash
+./cp-lite -v -b 4096 big.bin out_verbose.bin
+```
+
+Δοκιμή του -v
+```bash
+chmod 700 big.bin
+./cp-lite -p big.bin out_preserve.bin
+stat -c "%a" big.bin out_preserve.bin
+```
+
 ### wc-lite
 
 ```bash
@@ -60,7 +77,9 @@ strace -c ./cp-lite -b 4096 big.bin out.bin
 strace -c ./cp-lite -b 65536 big.bin out.bin
 
 strace -c ./wc-lite big.bin
-strace -c ./mmap-view big.bin
+strace -c ./mmap-view big.
+strace -e trace=openat,read,write,fstat,fchmod ./cp-lite -p big.bin out_preserve.bin
+
 
 # εστίαση σε βασικά syscalls
 strace -e trace=read,write,openat,close ./wc-lite big.bin
